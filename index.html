@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dompetasis</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dompetasis">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--text:#1d2433;--muted:#7a8296;--primary:#4f46e5;--primary2:#7c3aed;--in:#16a34a;--out:#dc2626;--inv:#d97706;--line:#e4e7ee}
+body.dark{--bg:#10131a;--card:#1a1f2b;--text:#eef0f6;--muted:#9aa2b5;--line:#2a3142}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;position:relative}
+header{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--primary);color:#fff}
+header h1{font-size:22px;font-weight:800;letter-spacing:-.5px;font-family:"Segoe UI","Helvetica Neue",system-ui,-apple-system,Roboto,sans-serif}
+header h1 span{font-weight:400;opacity:.9}
+header button{background:rgba(255,255,255,.18);border:0;color:#fff;font-size:20px;width:38px;height:38px;border-radius:50%;cursor:pointer}
+main{flex:1;padding:16px 16px 90px}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.saldo{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
+.saldo small{opacity:.85}.saldo h2{font-size:30px;margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid .card{margin:0;padding:12px 10px}
+.grid .card small{color:var(--muted);display:block;margin-bottom:6px}
+.grid .card b{font-size:13px;word-break:break-word}
+.in{color:var(--in)}.out{color:var(--out)}.inv{color:var(--inv)}
+h3{margin:18px 0 10px;font-size:16px}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font-size:15px}
+textarea{resize:vertical;min-height:70px}
+.btn{width:100%;padding:13px;border:0;border-radius:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.btn.in{background:var(--in);color:#fff}.btn.out{background:var(--out);color:#fff}.btn.inv{background:var(--inv);color:#fff}
+.btn.gray{background:var(--line);color:var(--text)}
+.seg{display:flex;gap:6px;background:var(--card);padding:5px;border-radius:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.seg button{flex:1;border:0;background:none;color:var(--muted);padding:10px 4px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer}
+.seg button.on[data-j="pemasukan"]{background:var(--in);color:#fff}
+.seg button.on[data-j="pengeluaran"]{background:var(--out);color:#fff}
+.seg button.on[data-j="investasi"]{background:var(--inv);color:#fff}
+.form-title{font-size:16px;font-weight:700}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border:0}
+.item .l{min-width:0}.item .l b{display:block;font-size:14px}
+.item .l span{font-size:12px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .r{text-align:right;font-weight:700;font-size:14px;white-space:nowrap}
+.item .r button{display:block;margin:4px 0 0 auto;border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer}
+.empty{text-align:center;color:var(--muted);padding:24px 0;font-size:14px}
+.filters{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto}
+.filters button{border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap}
+.filters button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+nav{position:fixed;bottom:0;width:100%;max-width:480px;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0)}
+nav button{flex:1;border:0;background:none;color:var(--muted);padding:10px 0;font-size:12px;cursor:pointer}
+nav button span{display:block;font-size:20px}
+nav button.active{color:var(--primary);font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.modal.show{display:flex}
+.sheet{background:var(--card);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px}
+.sheet h3{margin-top:0}
+.modal.center{align-items:center;padding:24px;z-index:40}
+.dialog{background:var(--card);width:100%;max-width:340px;border-radius:20px;padding:24px 20px 18px;text-align:center;animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.dialog .ico{width:54px;height:54px;border-radius:50%;background:rgba(220,38,38,.12);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px}
+.dialog h4{font-size:17px;margin-bottom:6px}
+.dialog p{white-space:pre-line;font-size:14px;color:var(--muted);line-height:1.45}
+.dialog .acts{display:flex;gap:10px;margin-top:20px}
+.dialog .acts .btn{margin-top:0}
+.sw{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 4px}
+.sw button{border:0;background:none;color:var(--text);font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.sw i{width:46px;height:46px;border-radius:50%;display:block;border:3px solid transparent;box-shadow:0 0 0 2px var(--line)}
+.sw button.on i{box-shadow:0 0 0 2px var(--text)}
+.custom{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:14px}
+.custom input{width:60px;height:40px;padding:2px;border-radius:10px}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:30}
+.toast.show{opacity:1}
+.lim{padding:10px 0;border-bottom:1px solid var(--line)}
+.lim:last-child{border:0}
+.lim .top{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.lim small{color:var(--muted);font-size:12px}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px 0 4px}
+.bar i{display:block;height:100%;border-radius:6px}
+.row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.row span{flex:1;font-size:14px}
+.row input{width:80px;text-align:right}
+.row input.nm{flex:1;width:auto;text-align:left;min-width:0}
+.row .del{border:0;background:var(--line);color:var(--out);width:34px;height:34px;border-radius:8px;font-size:15px;cursor:pointer;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Dompet<span>asis</span></h1>
+    <button onclick="toggleModal(true)" aria-label="Pengaturan">⚙️</button>
+  </header>
+
+  <main>
+    <!-- BERANDA -->
+    <section id="beranda" class="page active">
+      <div class="card saldo"><small>Saldo</small><h2 id="saldo">Rp 0</h2></div>
+      <div class="grid">
+        <div class="card"><small>Pemasukan</small><b class="in" id="totIn">Rp 0</b></div>
+        <div class="card"><small>Pengeluaran</small><b class="out" id="totOut">Rp 0</b></div>
+        <div class="card"><small>Invest</small><b class="inv" id="totInv">Rp 0</b></div>
+      </div>
+      <h3>Batas Pengeluaran Bulan Ini</h3>
+      <div class="card" id="limitBox"></div>
+      <h3>Transaksi Terakhir</h3>
+      <div class="card" id="recent"></div>
+    </section>
+
+    <!-- TRANSAKSI -->
+    <section id="transaksi" class="page">
+      <div class="seg" id="seg">
+        <button class="on" data-j="pemasukan">Pemasukan</button>
+        <button data-j="pengeluaran">Pengeluaran</button>
+        <button data-j="investasi">Investasi</button>
+      </div>
+      <div class="card">
+        <div class="form-title" id="formTitle">Tambah Pemasukan</div>
+        <label for="nominal">Nominal (Rp)</label>
+        <input type="text" id="nominal" inputmode="numeric" placeholder="0" autocomplete="off">
+        <label for="tanggal">Tanggal</label>
+        <input type="date" id="tanggal">
+        <label for="jam">Jam</label>
+        <input type="time" id="jam">
+        <label for="kategori">Kategori</label>
+        <select id="kategori"></select>
+        <label for="catatan">Catatan</label>
+        <textarea id="catatan" placeholder="Tulis catatan (opsional)"></textarea>
+        <button class="btn in" id="btnTambah" onclick="tambah()">+ Tambah Pemasukan</button>
+      </div>
+    </section>
+
+    <!-- RIWAYAT -->
+    <section id="riwayat" class="page">
+      <div class="filters" id="filters">
+        <button class="on" data-f="semua">Semua</button>
+        <button data-f="pemasukan">Pemasukan</button>
+        <button data-f="pengeluaran">Pengeluaran</button>
+        <button data-f="investasi">Investasi</button>
+      </div>
+      <div class="card" id="list"></div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="active" data-p="beranda"><span>🏠</span>Beranda</button>
+    <button data-p="transaksi"><span>➕</span>Transaksi</button>
+    <button data-p="riwayat"><span>🕘</span>Riwayat</button>
+  </nav>
+</div>
+
+<!-- PENGATURAN -->
+<div class="modal" id="modal" onclick="if(event.target===this)toggleModal(false)">
+  <div class="sheet">
+    <h3>Pengaturan</h3>
+    <button class="btn gray" onclick="bukaLimit()">📊 Atur Batas Pengeluaran (%)</button>
+    <button class="btn gray" onclick="bukaWarna()">🎨 Ganti Warna Tema</button>
+    <button class="btn gray" onclick="toggleDark()">🌙 Ganti Mode Gelap / Terang</button>
+    <button class="btn gray" onclick="bukaBackup()">💾 Cadangkan / Pulihkan Data</button>
+    <button class="btn gray" onclick="exportCSV()">⬇️ Ekspor ke CSV</button>
+    <button class="btn out" onclick="hapusSemua()">🗑️ Hapus Semua Data</button>
+    <button class="btn gray" onclick="toggleModal(false)">Tutup</button>
+  </div>
+</div>
+<div class="modal" id="modalLimit" onclick="if(event.target===this)tutupLimit()">
+  <div class="sheet" style="max-height:88vh;overflow-y:auto">
+    <h3>Kategori &amp; Batas Pengeluaran</h3>
+    <p style="font-size:12px;color:var(--muted)">Ubah nama, ubah persen (dari pemasukan bulanan), atau hapus kategori.</p>
+    <div id="limitForm"></div>
+    <button class="btn gray" onclick="tambahBaris()">+ Tambah Kategori</button>
+    <p id="limitTotal" style="margin-top:12px;font-size:13px;color:var(--muted)"></p>
+    <button class="btn in" onclick="simpanLimit()">Simpan</button>
+    <button class="btn gray" onclick="tutupLimit()">Batal</button>
+  </div>
+</div>
+<div class="modal" id="modalCSV" onclick="if(event.target===this)tutupCSV()">
+  <div class="sheet">
+    <h3>Ekspor CSV</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Salin teks di bawah lalu tempel ke aplikasi catatan atau spreadsheet. Simpan dengan akhiran .csv.</p>
+    <textarea id="csvText" readonly style="min-height:160px;font-size:12px;font-family:monospace"></textarea>
+    <button class="btn in" onclick="salinCSV()">📋 Salin CSV</button>
+    <button class="btn gray" onclick="unduhCSV()">⬇️ Unduh File (browser biasa)</button>
+    <button class="btn gray" onclick="tutupCSV()">Tutup</button>
+  </div>
+</div>
+<div class="modal" id="modalBackup" onclick="if(event.target===this)tutupBackup()">
+  <div class="sheet" style="max-height:90vh;overflow-y:auto">
+    <h3>Cadangkan / Pulihkan</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">
+      <b>Cadangkan:</b> tekan Salin, lalu simpan teksnya di catatan/Drive.<br>
+      <b>Pulihkan:</b> tempel teks cadangan di kotak ini, lalu tekan Pulihkan.</p>
+    <textarea id="backupText" style="min-height:150px;font-size:12px;font-family:monospace" placeholder="Teks cadangan"></textarea>
+    <button class="btn in" onclick="salinBackup()">📋 Salin Cadangan</button>
+    <button class="btn inv" onclick="pulihkan()">♻️ Pulihkan dari Teks</button>
+    <button class="btn gray" onclick="tutupBackup()">Tutup</button>
+  </div>
+</div>
+<div class="modal" id="modalWarna" onclick="if(event.target===this)tutupWarna()">
+  <div class="sheet">
+    <h3>Warna Tema</h3>
+    <div class="sw" id="swatches"></div>
+    <div class="custom"><span>Warna sendiri</span><input type="color" id="warnaCustom" oninput="pilihWarna(this.value, campur(this.value))"></div>
+    <button class="btn gray" onclick="tutupWarna()">Tutup</button>
+  </div>
+</div>
+<div class="modal center" id="modalKonfirm" onclick="if(event.target===this)tutupKonfirm()">
+  <div class="dialog">
+    <div class="ico">🗑️</div>
+    <h4 id="kJudul"></h4>
+    <p id="kPesan"></p>
+    <div class="acts">
+      <button class="btn gray" onclick="tutupKonfirm()">Batal</button>
+      <button class="btn out" id="kOk">Hapus</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'Dompetasis_data', THEME = 'Dompetasis_theme';
+let data = [], filter = 'semua', jenis = 'pemasukan';
+const KATEGORI = {
+  pemasukan: ['Gaji','Freelance','Sales','Lainnya'],
+  pengeluaran: ['Makanan/Rokok','Transportasi','Kesehatan','Keluarga','Hiburan','Internet','Lainnya'],
+  investasi: ['Dana darurat','Emas','Reksadana','Saham','Kripto','Lainnya']
+};
+const NAMA = {pemasukan:'Pemasukan', pengeluaran:'Pengeluaran', investasi:'Investasi'};
+const LIMIT_KEY = 'Dompetasis_limit', KAT_KEY = 'Dompetasis_kategori';
+const LIMIT_DEFAULT = {'Makanan/Rokok':21, Transportasi:15, Kesehatan:10, Keluarga:20, Hiburan:10, Internet:5, Lainnya:5};
+let limit = {...LIMIT_DEFAULT};
+const $ = id => document.getElementById(id);
+
+// ---------- Warna tema ----------
+const WARNA_KEY = 'Dompetasis_warna';
+const PRESET = [
+  {n:'Ungu',   a:'#4f46e5', b:'#7c3aed'},
+  {n:'Biru',   a:'#2563eb', b:'#0ea5e9'},
+  {n:'Hijau',  a:'#059669', b:'#34d399'},
+  {n:'Teal',   a:'#0d9488', b:'#22d3ee'},
+  {n:'Pink',   a:'#db2777', b:'#f472b6'},
+  {n:'Oranye', a:'#c2410c', b:'#f59e0b'},
+  {n:'Merah',  a:'#b91c1c', b:'#f87171'},
+  {n:'Hitam',  a:'#1f2937', b:'#4b5563'}
+];
+let warnaAktif = PRESET[0].a;
+function campur(hex){ // campur dengan putih untuk warna kedua gradasi
+  const n = parseInt(hex.slice(1), 16), m = 0.28;
+  const c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => Math.round(v + (255 - v) * m));
+  return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+}
+function terapkanWarna(a, b){
+  warnaAktif = a;
+  const r = document.documentElement.style;
+  r.setProperty('--primary', a);
+  r.setProperty('--primary2', b);
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', a);
+}
+function muatWarna(){
+  try {
+    const w = JSON.parse(localStorage.getItem(WARNA_KEY));
+    if (w && /^#[0-9a-f]{6}$/i.test(w.a) && /^#[0-9a-f]{6}$/i.test(w.b)) terapkanWarna(w.a, w.b);
+  } catch(e){}
+}
+function pilihWarna(a, b){
+  terapkanWarna(a, b);
+  try { localStorage.setItem(WARNA_KEY, JSON.stringify({a, b})); } catch(e){}
+  tandaiWarna();
+}
+function tandaiWarna(){
+  document.querySelectorAll('#swatches button').forEach(btn =>
+    btn.classList.toggle('on', btn.dataset.a.toLowerCase() === warnaAktif.toLowerCase()));
+  $('warnaCustom').value = warnaAktif;
+}
+function bukaWarna(){
+  toggleModal(false);
+  $('swatches').innerHTML = PRESET.map(p =>
+    `<button data-a="${p.a}" onclick="pilihWarna('${p.a}','${p.b}')"><i style="background:linear-gradient(135deg,${p.a},${p.b})"></i>${p.n}</button>`).join('');
+  tandaiWarna();
+  $('modalWarna').classList.add('show');
+}
+function tutupWarna(){ $('modalWarna').classList.remove('show'); }
+
+// ---------- Penyimpanan ----------
+function load(){
+  muatWarna();
+  try { data = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ data = []; }
+  try { if (localStorage.getItem(THEME) === 'dark') document.body.classList.add('dark'); } catch(e){}
+  try { const k = JSON.parse(localStorage.getItem(KAT_KEY)); if (Array.isArray(k) && k.length) KATEGORI.pengeluaran = k; } catch(e){}
+  try { limit = {...LIMIT_DEFAULT, ...(JSON.parse(localStorage.getItem(LIMIT_KEY)) || {})}; } catch(e){}
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e){ toast('Gagal menyimpan data'); }
+}
+
+// ---------- Util ----------
+const rp = n => 'Rp ' + Number(n).toLocaleString('id-ID');
+const tgl = s => new Date(s + 'T00:00:00').toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'});
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+const sum = tipe => data.filter(d => d.tipe === tipe).reduce((a, d) => a + d.nominal, 0);
+const cls = {pemasukan:'in', pengeluaran:'out', investasi:'inv'};
+const sign = {pemasukan:'+', pengeluaran:'-', investasi:'→'};
+
+// ---------- Navigasi ----------
+document.querySelectorAll('nav button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === b.dataset.p));
+    window.scrollTo(0, 0);
+    render();
+  };
+});
+document.querySelectorAll('#filters button').forEach(b => {
+  b.onclick = () => {
+    filter = b.dataset.f;
+    document.querySelectorAll('#filters button').forEach(x => x.classList.toggle('on', x === b));
+    render();
+  };
+});
+
+// ---------- Tambah transaksi ----------
+function setJenis(j){
+  jenis = j;
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.j === j));
+  $('kategori').innerHTML = KATEGORI[j].map(k => `<option>${k}</option>`).join('');
+  $('formTitle').textContent = 'Tambah ' + NAMA[j];
+  const btn = $('btnTambah');
+  btn.textContent = '+ Tambah ' + NAMA[j];
+  btn.className = 'btn ' + cls[j];
+}
+document.querySelectorAll('#seg button').forEach(b => b.onclick = () => setJenis(b.dataset.j));
+
+function tambah(){
+  const tipe = jenis;
+  const nominal = parseFloat($('nominal').value.replace(/\./g, ''));
+  const tanggal = $('tanggal').value;
+  const jam = $('jam').value;
+  const kategori = $('kategori').value;
+  if (!nominal || nominal <= 0) return toast('Isi nominal dengan benar');
+  if (!tanggal) return toast('Pilih tanggal');
+  if (!jam) return toast('Pilih jam');
+  data.push({
+    id: Date.now(), tipe, nominal, tanggal, jam,
+    kategori,
+    catatan: $('catatan').value.trim()
+  });
+  save();
+  $('nominal').value = ''; $('catatan').value = '';
+  $('jam').value = new Date().toTimeString().slice(0, 5);
+  $('kategori').selectedIndex = 0;
+  toast('Berhasil menambah ' + tipe);
+  if (tipe === 'pengeluaran' && tanggal.startsWith(bulanIni())) cekLimit(kategori);
+  render();
+}
+// ---------- Dialog konfirmasi ----------
+function konfirmasi(judul, pesan, tombol, aksi){
+  $('kJudul').textContent = judul;
+  $('kPesan').textContent = pesan;
+  $('kOk').textContent = tombol;
+  $('kOk').onclick = () => { tutupKonfirm(); aksi(); };
+  $('modalKonfirm').classList.add('show');
+}
+function tutupKonfirm(){ $('modalKonfirm').classList.remove('show'); }
+
+function hapus(id){
+  const d = data.find(x => x.id === id);
+  if (!d) return;
+  konfirmasi('Hapus transaksi?', `${d.kategori} • ${sign[d.tipe]} ${rp(d.nominal)}\nTindakan ini tidak bisa dibatalkan.`, 'Hapus', () => {
+    data = data.filter(x => x.id !== id);
+    save(); render(); toast('Transaksi dihapus');
+  });
+}
+
+// ---------- Tampilan ----------
+function itemHTML(d, withDelete){
+  return `<div class="item">
+    <div class="l"><b>${esc(d.kategori)}</b><span>${tgl(d.tanggal)}${d.jam ? ', ' + d.jam : ''}${d.catatan ? ' • ' + esc(d.catatan) : ''}</span></div>
+    <div class="r ${cls[d.tipe]}">${sign[d.tipe]} ${rp(d.nominal)}
+      ${withDelete ? `<button onclick="hapus(${d.id})">Hapus</button>` : ''}</div>
+  </div>`;
+}
+const urut = arr => [...arr].sort((a, b) => (b.tanggal + (b.jam || '')).localeCompare(a.tanggal + (a.jam || '')) || b.id - a.id);
+
+function render(){
+  const masuk = sum('pemasukan'), keluar = sum('pengeluaran'), inv = sum('investasi');
+  $('saldo').textContent = rp(masuk - keluar - inv);
+  $('totIn').textContent = rp(masuk);
+  $('totOut').textContent = rp(keluar);
+  $('totInv').textContent = rp(inv);
+
+  const terbaru = urut(data).slice(0, 5);
+  $('recent').innerHTML = terbaru.length ? terbaru.map(d => itemHTML(d, false)).join('') : '<div class="empty">Belum ada transaksi</div>';
+
+  const hasil = urut(data).filter(d => filter === 'semua' || d.tipe === filter);
+  $('list').innerHTML = hasil.length ? hasil.map(d => itemHTML(d, true)).join('') : '<div class="empty">Belum ada riwayat</div>';
+  renderLimit();
+}
+
+// ---------- Batas pengeluaran ----------
+const bulanIni = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+
+function statLimit(){
+  const bln = data.filter(d => d.tanggal.startsWith(bulanIni()));
+  const masuk = bln.filter(d => d.tipe === 'pemasukan').reduce((a, d) => a + d.nominal, 0);
+  const pakai = {};
+  bln.filter(d => d.tipe === 'pengeluaran').forEach(d => pakai[d.kategori] = (pakai[d.kategori] || 0) + d.nominal);
+  return {masuk, pakai};
+}
+
+function renderLimit(){
+  const {masuk, pakai} = statLimit();
+  if (!masuk){
+    $('limitBox').innerHTML = '<div class="empty">Belum ada pemasukan bulan ini.<br>Batas dihitung dari pemasukan bulanan.</div>';
+    return;
+  }
+  $('limitBox').innerHTML = KATEGORI.pengeluaran.map(k => {
+    const pct = limit[k] || 0, batas = masuk * pct / 100, pk = pakai[k] || 0;
+    const rasio = batas > 0 ? pk / batas * 100 : (pk > 0 ? 999 : 0);
+    const warna = rasio > 100 ? 'var(--out)' : rasio >= 80 ? 'var(--inv)' : 'var(--in)';
+    const info = rasio > 100 ? 'Melebihi batas ' + rp(Math.round(pk - batas)) : 'Sisa ' + rp(Math.round(batas - pk));
+    return `<div class="lim">
+      <div class="top"><b>${esc(k)} (${pct}%)</b><span>${rp(pk)} / ${rp(Math.round(batas))}</span></div>
+      <div class="bar"><i style="width:${Math.min(rasio, 100)}%;background:${warna}"></i></div>
+      <small>${info}</small></div>`;
+  }).join('');
+}
+
+function cekLimit(k){
+  const {masuk, pakai} = statLimit();
+  if (masuk && (pakai[k] || 0) > masuk * (limit[k] || 0) / 100) toast('⚠️ Batas ' + k + ' bulan ini terlampaui');
+}
+
+function barisHTML(nama, pct){
+  return `<div class="row" data-orig="${esc(nama)}">
+    <input type="text" class="nm" value="${esc(nama)}" placeholder="Nama kategori" maxlength="30">
+    <input type="number" class="pc" min="0" max="100" step="0.1" value="${pct}" oninput="hitungTotalLimit()"><b>%</b>
+    <button class="del" onclick="hapusBaris(this)" aria-label="Hapus">✕</button></div>`;
+}
+function bukaLimit(){
+  toggleModal(false);
+  $('limitForm').innerHTML = KATEGORI.pengeluaran.map(k => barisHTML(k, limit[k] || 0)).join('');
+  hitungTotalLimit();
+  $('modalLimit').classList.add('show');
+}
+function tutupLimit(){ $('modalLimit').classList.remove('show'); }
+
+function tambahBaris(){
+  $('limitForm').insertAdjacentHTML('beforeend', barisHTML('', 0));
+  const n = document.querySelectorAll('#limitForm .nm');
+  n[n.length - 1].focus();
+  hitungTotalLimit();
+}
+function hapusBaris(btn){
+  if (document.querySelectorAll('#limitForm .row').length <= 1) return toast('Minimal ada 1 kategori');
+  btn.closest('.row').remove();
+  hitungTotalLimit();
+}
+
+function totalLimit(){
+  return [...document.querySelectorAll('#limitForm .pc')].reduce((a, i) => a + (parseFloat(i.value) || 0), 0);
+}
+function hitungTotalLimit(){
+  const t = totalLimit();
+  $('limitTotal').textContent = 'Total: ' + +t.toFixed(1) + '% dari pemasukan' + (t > 100 ? ' (melebihi 100%!)' : '');
+}
+function simpanLimit(){
+  const rows = [...document.querySelectorAll('#limitForm .row')].map(r => ({
+    orig: r.dataset.orig,
+    nama: r.querySelector('.nm').value.trim(),
+    pct: Math.min(100, Math.max(0, parseFloat(r.querySelector('.pc').value) || 0))
+  }));
+  if (rows.some(r => !r.nama)) return toast('Nama kategori tidak boleh kosong');
+  const unik = new Set(rows.map(r => r.nama.toLowerCase()));
+  if (unik.size !== rows.length) return toast('Ada nama kategori yang sama');
+  if (totalLimit() > 100) return toast('Total batas tidak boleh lebih dari 100%');
+
+  // kategori yang diganti namanya: transaksi lama ikut diperbarui
+  rows.forEach(r => {
+    if (r.orig && r.orig !== r.nama) {
+      data.forEach(d => { if (d.tipe === 'pengeluaran' && d.kategori === r.orig) d.kategori = r.nama; });
+    }
+  });
+  KATEGORI.pengeluaran = rows.map(r => r.nama);
+  limit = {};
+  rows.forEach(r => limit[r.nama] = r.pct);
+  try {
+    localStorage.setItem(KAT_KEY, JSON.stringify(KATEGORI.pengeluaran));
+    localStorage.setItem(LIMIT_KEY, JSON.stringify(limit));
+  } catch(e){ return toast('Gagal menyimpan'); }
+  save();
+  if (jenis === 'pengeluaran') setJenis('pengeluaran');
+  tutupLimit(); render(); toast('Kategori & batas disimpan');
+}
+
+// ---------- Pengaturan ----------
+function toggleModal(show){ $('modal').classList.toggle('show', show); }
+function toggleDark(){
+  const dark = document.body.classList.toggle('dark');
+  try { localStorage.setItem(THEME, dark ? 'dark' : 'light'); } catch(e){}
+}
+function hapusSemua(){
+  toggleModal(false);
+  konfirmasi('Hapus semua data?', 'Seluruh transaksi akan dihapus permanen dan tidak bisa dikembalikan.', 'Hapus Semua', () => {
+    data = []; save(); render(); toast('Semua data dihapus');
+  });
+}
+function buatCSV(){
+  const q = s => '"' + String(s).replace(/"/g, '""') + '"';
+  return [['Tanggal','Jam','Jenis','Kategori','Nominal','Catatan'].join(',')]
+    .concat(urut(data).map(d => [d.tanggal, d.jam || '', d.tipe, q(d.kategori), d.nominal, q(d.catatan)].join(','))).join('\n');
+}
+function exportCSV(){
+  if (!data.length) return toast('Belum ada data');
+  toggleModal(false);
+  $('csvText').value = buatCSV();
+  $('modalCSV').classList.add('show');
+}
+function tutupCSV(){ $('modalCSV').classList.remove('show'); }
+function salinCSV(){
+  const t = $('csvText');
+  t.focus(); t.select(); t.setSelectionRange(0, t.value.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(e){}
+  if (!ok && navigator.clipboard) {
+    navigator.clipboard.writeText(t.value).then(() => toast('CSV disalin'), () => toast('Tekan lama teks lalu pilih Salin'));
+    return;
+  }
+  toast(ok ? 'CSV disalin' : 'Tekan lama teks lalu pilih Salin');
+}
+function unduhCSV(){
+  try {
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\ufeff' + buatCSV());
+    a.download = 'Dompetasis.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch(e){ toast('Unduh tidak didukung, pakai Salin'); }
+}
+
+// ---------- Cadangkan / Pulihkan ----------
+function bukaBackup(){
+  toggleModal(false);
+  $('backupText').value = JSON.stringify({app:'Dompetasis', versi:1, data, limit, kategoriPengeluaran:KATEGORI.pengeluaran});
+  $('modalBackup').classList.add('show');
+}
+function tutupBackup(){ $('modalBackup').classList.remove('show'); }
+function salinBackup(){
+  const t = $('backupText');
+  t.focus(); t.select(); t.setSelectionRange(0, t.value.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(e){}
+  toast(ok ? 'Cadangan disalin' : 'Tekan lama teks lalu pilih Salin');
+}
+function pulihkan(){
+  let o;
+  try { o = JSON.parse($('backupText').value.trim()); } catch(e){ return toast('Teks cadangan tidak valid'); }
+  if (!o || o.app !== 'Dompetasis' || !Array.isArray(o.data)) return toast('Bukan cadangan Dompetasis');
+  const valid = o.data.every(d => d && typeof d.nominal === 'number' && d.tanggal && ['pemasukan','pengeluaran','investasi'].includes(d.tipe));
+  if (!valid) return toast('Isi cadangan rusak');
+  konfirmasi('Pulihkan data?', `${o.data.length} transaksi akan menggantikan data yang ada sekarang.`, 'Pulihkan', () => {
+    data = o.data;
+    if (Array.isArray(o.kategoriPengeluaran) && o.kategoriPengeluaran.length) KATEGORI.pengeluaran = o.kategoriPengeluaran;
+    if (o.limit && typeof o.limit === 'object') limit = o.limit;
+    try {
+      localStorage.setItem(KAT_KEY, JSON.stringify(KATEGORI.pengeluaran));
+      localStorage.setItem(LIMIT_KEY, JSON.stringify(limit));
+    } catch(e){}
+    save(); setJenis(jenis); tutupBackup(); render(); toast('Data dipulihkan');
+  });
+}
+
+// ---------- Format nominal otomatis ----------
+$('nominal').addEventListener('input', e => {
+  const angka = e.target.value.replace(/\D/g, '');
+  e.target.value = angka.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+});
+
+// ---------- Aplikasi bisa dipakai offline (PWA) ----------
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
+}
+
+// ---------- Mulai ----------
+load();
+$('tanggal').valueAsDate = new Date();
+$('jam').value = new Date().toTimeString().slice(0, 5);
+setJenis('pemasukan');
+render();
+</script>
+</body>
+</html>
