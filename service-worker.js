@@ -1,5 +1,5 @@
 // Naikkan angka versi ini setiap kali Anda mengubah index.html
-const CACHE = 'dompetasis-v9';
+const CACHE = 'dompetasis-v10';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
