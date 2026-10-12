@@ -1,6 +1,6 @@
 {
-  "name": "YourAsisten",
-  "short_name": "YourAsisten",
+  "name": "Dompetasis",
+  "short_name": "Dompetasis",
   "description": "Asisten pencatat keuangan pribadi",
   "start_url": "./index.html",
   "scope": "./",
